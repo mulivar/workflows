@@ -1,8 +1,10 @@
 package neota.workflow.server.cli.commands;
 
-import lombok.AllArgsConstructor;
 import lombok.Getter;
-import neota.workflow.commands.Command;
+import neota.workflow.commands.CliCommand;
+import neota.workflow.commands.CommandStatus;
+import neota.workflow.commands.Status;
+import neota.workflow.elements.Session;
 import neota.workflow.server.WorkflowHandler;
 
 
@@ -11,16 +13,19 @@ import neota.workflow.server.WorkflowHandler;
  * @author leto
  *
  */
-@AllArgsConstructor
 @Getter
-public class ResumeSessionCommand implements Command
+public class ResumeSessionCommand extends CliCommand
 {
-	WorkflowHandler workflows;
-	String argument;
+	public ResumeSessionCommand(WorkflowHandler workflows, String argument)
+	{
+		super(workflows, argument);
+	}
 	
 
 	@Override
-	public void execute()
+	public CommandStatus execute()
 	{
+		Session session = workflows.resumeSession(argument);
+		return new CommandStatus("", Status.SUCCESS);
 	}
 }

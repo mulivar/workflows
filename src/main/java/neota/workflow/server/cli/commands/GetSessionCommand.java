@@ -1,8 +1,10 @@
 package neota.workflow.server.cli.commands;
 
-import lombok.AllArgsConstructor;
 import lombok.Getter;
-import neota.workflow.commands.Command;
+import neota.workflow.commands.CliCommand;
+import neota.workflow.commands.CommandStatus;
+import neota.workflow.commands.Status;
+import neota.workflow.elements.Session;
 import neota.workflow.server.WorkflowHandler;
 
 
@@ -10,16 +12,19 @@ import neota.workflow.server.WorkflowHandler;
  * 
  * @author leto
  */
-@AllArgsConstructor
 @Getter
-public class GetSessionCommand implements Command
+public class GetSessionCommand extends CliCommand
 {
-	WorkflowHandler workflows;
-	String argument;
-	
-	
-	@Override
-	public void execute()
+	public GetSessionCommand(WorkflowHandler workflows, String argument)
 	{
+		super(workflows, argument);
+	}
+	
+
+	@Override
+	public CommandStatus execute()
+	{
+		Session session = workflows.getSession(argument);
+		return new CommandStatus(session.getLane(), Status.SUCCESS);
 	}
 }

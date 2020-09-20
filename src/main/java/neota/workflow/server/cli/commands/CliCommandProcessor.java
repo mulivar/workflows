@@ -5,7 +5,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import neota.workflow.commands.Command;
+import neota.workflow.commands.CliCommand;
 import neota.workflow.commands.CommandProcessor;
 import neota.workflow.server.WorkflowHandler;
 
@@ -34,7 +34,7 @@ public class CliCommandProcessor implements CommandProcessor
 	
 	
 	@Override
-	public Command makeCommand(String data)
+	public CliCommand makeCommand(String data)
 	{
 		data = data.toLowerCase();
 		String[] tokens = data.split("\\s");
@@ -56,7 +56,7 @@ public class CliCommandProcessor implements CommandProcessor
 			}
 		}
 		
-		Command command;
+		CliCommand command;
 		
 		switch(type)
 		{

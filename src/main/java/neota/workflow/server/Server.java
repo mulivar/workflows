@@ -29,6 +29,10 @@ public class Server
 	 */
 	public void startRestInterface()
 	{
-		
+		// some idea of starting a REST server that would also process the commands
+		/*
+		rest = new RestCommandServer(workflows);
+		rest.startServer();
+		*/
 	}
 }

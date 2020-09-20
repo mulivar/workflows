@@ -7,5 +7,5 @@ package neota.workflow.commands;
  */
 public interface Command
 {
-	void execute();
+	CommandStatus execute();
 }
