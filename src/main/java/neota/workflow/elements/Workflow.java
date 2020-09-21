@@ -21,27 +21,6 @@ public class Workflow
 	private String endLane;
 	
 	
-	private void addLane(Lane lane)
-	{
-		lanes.put(lane.getId(), lane);
-		
-		if (lane.isStartLane())
-		{
-			startLane = lane.getId();
-		}
-		else if (lane.isEndLane())
-		{
-			endLane = lane.getId();
-		}
-	}
-	
-	
-	private void addNode(Node node)
-	{
-		nodes.put(node.getId(), node);
-	}
-	
-	
 	public static Workflow from(WorkflowData data)
 	{
 		SourceData source = data.getSource();
@@ -67,7 +46,13 @@ public class Workflow
 	}
 	
 	
-	public Lane getNodesLane(String nodeId)
+	public int getId()
+	{
+		return hashCode();
+	}
+	
+	
+	public Lane getNodeLane(String nodeId)
 	{
 		Lane lane = null;
 		
@@ -93,5 +78,26 @@ public class Workflow
 	public Node getNode(String id)
 	{
 		return nodes.get(id);
+	}
+	
+	
+	private void addLane(Lane lane)
+	{
+		lanes.put(lane.getId(), lane);
+		
+		if (lane.isStartLane())
+		{
+			startLane = lane.getId();
+		}
+		else if (lane.isEndLane())
+		{
+			endLane = lane.getId();
+		}
+	}
+	
+	
+	private void addNode(Node node)
+	{
+		nodes.put(node.getId(), node);
 	}
 }

@@ -10,7 +10,7 @@ import neota.workflow.server.WorkflowHandler;
 
 /**
  * 
- * @author leto
+ * @author iackar
  */
 @Getter
 public class GetSessionCommand extends CliCommand
@@ -25,6 +25,12 @@ public class GetSessionCommand extends CliCommand
 	public CommandStatus execute()
 	{
 		Session session = workflows.getSession(argument);
-		return new CommandStatus(session.getLane(), Status.SUCCESS);
+		String output = session.getCurrentLane().getName();
+		if (session.getState() == Session.State.COMPLETED)
+		{
+			output = "Ended";
+		}
+		
+		return new CommandStatus(output, Status.SUCCESS);
 	}
 }

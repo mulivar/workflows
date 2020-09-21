@@ -11,7 +11,6 @@ public class Server
 	WorkflowHandler workflows = new WorkflowHandler();
 	
 	CommandServer cli;
-	CommandServer rest;
 	
 	
 	/**
@@ -21,18 +20,5 @@ public class Server
 	{
 		cli = new CliCommandServer(workflows);
 		cli.startServer();
-	}
-	
-	
-	/**
-	 * Start the REST interface for processing of the commands.
-	 */
-	public void startRestInterface()
-	{
-		// some idea of starting a REST server that would also process the commands
-		/*
-		rest = new RestCommandServer(workflows);
-		rest.startServer();
-		*/
 	}
 }

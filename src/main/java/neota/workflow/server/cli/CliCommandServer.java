@@ -5,9 +5,9 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintStream;
 import java.text.MessageFormat;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
-import lombok.Getter;
-import lombok.Setter;
 import neota.workflow.commands.Command;
 import neota.workflow.commands.CommandProcessor;
 import neota.workflow.commands.CommandStatus;
@@ -18,98 +18,80 @@ import neota.workflow.server.cli.commands.CliCommandProcessor;
 
 
 /**
- * @author leto
+ * @author iackar
  */
-@Getter @Setter
-public class CliCommandServer extends Thread implements CommandServer
+public class CliCommandServer implements CommandServer
 {
+	CliReactor reactor = new CliReactor();
+	
 	WorkflowHandler workflows;
 	CommandProcessor commander;
 	
-	boolean running = false;
+	ExecutorService executor = Executors.newSingleThreadExecutor();
 	
 	
 	public CliCommandServer(WorkflowHandler handler)
 	{
 		workflows = handler;
 		commander = new CliCommandProcessor(workflows);
+		
+		workflows.registerSessionObserver(reactor);
+		workflows.registerTaskObserver(reactor);
 	}
 	
 	
 	@Override
-	public void run()
+	public void startServer()
 	{
-		super.run();
+		System.out.println("Available commands:");
+		System.out.println(((CliCommandProcessor) commander).getAvailableCommandsAsString());
 		
-		try
+		executor.submit(new Runnable()
 		{
-			running = true;
-			BufferedReader reader = new BufferedReader(new InputStreamReader(System.in));
-			
-			String line;
-			while ((line = reader.readLine()) != null)
+			@Override
+			public void run()
 			{
 				try
 				{
-					Command command = commander.makeCommand(line);
-					CommandStatus status = command.execute();
+					BufferedReader reader = new BufferedReader(new InputStreamReader(System.in));
 					
-					PrintStream output = status.getStatus() == Status.ERROR ? System.err : System.out;
-					
-					if (!status.getMessage().isEmpty()) 
+					String line;
+					while ((line = reader.readLine()) != null)
 					{
-						output.println(status.getMessage());
+						try
+						{
+							Command command = commander.makeCommand(line);
+							CommandStatus status = command.execute();
+							
+							PrintStream output = status.getStatus() == Status.ERROR ? System.err : System.out;
+							
+							if (!status.getMessage().isEmpty()) 
+							{
+								output.println(status.getMessage());
+							}
+						}
+						catch (Exception e)
+						{
+							System.err.println(MessageFormat.format(
+									"An error occurred while executing the command {0}, message = {1}", line, e.getMessage()));
+						}
 					}
+
+					workflows.shutdown();
 				}
-				catch (Exception e)
-				{
+				catch (IOException e) {
 					System.err.println(MessageFormat.format(
-							"An error occurred while executing the command {0}, message = {1}", line, e.getMessage()));
-				}
-				
-				if (!running)
-				{
-					break;
+							"An error occurred while reading from the command line, message = {0}", e.getMessage()));
 				}
 			}
-		}
-		catch (IOException e) {
-			System.err.println(MessageFormat.format(
-					"An error occurred while reading from the command line, message = {0}", e.getMessage()));
-		}
-		
-		running = false;
-	}
-	
-	
-	@Override
-	public synchronized void startServer()
-	{
-		if (!isAlive())
-		{
-			start();
-		}
+		});
 	}
 
 	
 	@Override
-	public synchronized void stopServer()
+	public void stopServer()
 	{
-		if (isAlive())
-		{
-			setRunning(false);
-		}
-	}
-
-	
-	@Override
-	public void getServerState()
-	{
-	}
-	
-
-	@Override
-	public void getCommandStats()
-	{
+		workflows.shutdown();
+		executor.shutdown();
 	}
 }

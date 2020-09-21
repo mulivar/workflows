@@ -11,19 +11,28 @@ import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import lombok.Getter;
 import neota.workflow.data.WorkflowData;
 import neota.workflow.elements.Session;
 import neota.workflow.elements.Workflow;
 
 
 /**
- * @author leto
+ * @author iackar
  */
 public class WorkflowHandler
 {
+	@Getter
 	private Map<Integer, Workflow> workflows = new HashMap<>();
-	private Map<String, Session> sessions = new HashMap<>();
+	
+	@Getter
 	private SessionExecutor executor = new SessionExecutor();
+	
+	
+	public void shutdown()
+	{
+		executor.shutdown();
+	}
 	
 	
 	public synchronized int loadFromJson(String path) throws JsonParseException, JsonMappingException, IOException
@@ -35,27 +44,27 @@ public class WorkflowHandler
 	    // create a workflow out of the workflow data
 	    Workflow workflow = Workflow.from(workflowData);
 	    
-	    int hash = workflow.hashCode();
-	    if (workflows.containsKey(hash))
+	    int workflowId = workflow.getId();
+	    if (workflows.containsKey(workflowId))
 	    {
 	    	throw new RuntimeException(MessageFormat.format(
 	    			"Attempting to load an existing workflow is not allowed, the workflow already exists under ID {0}",
-	    			hash));
+	    			workflowId));
 	    }
 	    else
 	    {
-	    	workflows.put(hash, workflow);
+	    	workflows.put(workflowId, workflow);
 	    	System.out.println("Successfully stored workflow: " + workflow.toString());
 	    }
 		
-		return hash;
+		return workflowId;
 	}
 	
 
 	public synchronized String createSession(int workflowId)
 	{
 		final String sessionId = UUID.randomUUID().toString();
-		Session session = new Session(sessionId, workflowId, workflows.get(workflowId));
+		Session session = new Session(sessionId, workflows.get(workflowId));
 		
 		executor.submit(session);
 		
@@ -65,17 +74,29 @@ public class WorkflowHandler
 	
 	public synchronized Session getSession(String sessionId)
 	{
-		return null;
+		return executor.getSession(sessionId);
 	}
 
 
-	public synchronized Session resumeSession(String sessionId)
+	public synchronized void resumeSession(String sessionId)
 	{
-		return null;
+		executor.resumeSession(sessionId);
 	}
 
 
 	public synchronized void setTimeout(int timeout)
 	{
+	}
+	
+	
+	public void registerTaskObserver(TaskObserver observer)
+	{
+		executor.registerTaskObserver(observer);
+	}
+	
+	
+	public void registerSessionObserver(SessionObserver observer)
+	{
+		executor.registerSessionObserver(observer);
 	}
 }

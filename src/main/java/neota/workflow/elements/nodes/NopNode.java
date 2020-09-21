@@ -5,12 +5,21 @@ public class NopNode extends Node
 {
 	public NopNode(String id, String name)
 	{
-		super(id, NodeType.NOP, name);
+		super(id, Node.Type.NOP, name);
 	}
 
 	
 	@Override
-	public void execute()
-	{	
+	public void runNodeTask()
+	{
+		try
+		{
+			Thread.sleep(10000);
+		}
+		catch (InterruptedException e)
+		{
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 	}
 }

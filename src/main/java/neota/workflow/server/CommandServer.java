@@ -9,6 +9,4 @@ public interface CommandServer
 {
 	void startServer();
 	void stopServer();
-	void getServerState();
-	void getCommandStats();
 }

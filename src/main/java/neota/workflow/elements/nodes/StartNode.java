@@ -5,12 +5,12 @@ public class StartNode extends Node
 {
 	public StartNode(String id, String name)
 	{
-		super(id, NodeType.START, name);
+		super(id, Node.Type.START, name);
 	}
 
 	
 	@Override
-	public void execute()
+	public void runNodeTask()
 	{	
 	}
 }

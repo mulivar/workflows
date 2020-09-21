@@ -4,13 +4,12 @@ import lombok.Getter;
 import neota.workflow.commands.CliCommand;
 import neota.workflow.commands.CommandStatus;
 import neota.workflow.commands.Status;
-import neota.workflow.elements.Session;
 import neota.workflow.server.WorkflowHandler;
 
 
 /**
  * 
- * @author leto
+ * @author iackar
  *
  */
 @Getter
@@ -25,7 +24,7 @@ public class ResumeSessionCommand extends CliCommand
 	@Override
 	public CommandStatus execute()
 	{
-		Session session = workflows.resumeSession(argument);
+		workflows.resumeSession(argument);
 		return new CommandStatus("", Status.SUCCESS);
 	}
 }

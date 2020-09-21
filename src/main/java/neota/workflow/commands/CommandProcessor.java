@@ -3,7 +3,7 @@ package neota.workflow.commands;
 
 /**
  * 
- * @author leto
+ * @author iackar
  */
 public interface CommandProcessor
 {

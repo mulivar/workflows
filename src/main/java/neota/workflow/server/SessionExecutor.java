@@ -2,162 +2,180 @@ package neota.workflow.server;
 
 import java.text.MessageFormat;
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.Queue;
+import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.stream.Collectors;
 
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import neota.workflow.elements.Lane;
+import neota.workflow.elements.NodeCallback;
 import neota.workflow.elements.Session;
-import neota.workflow.elements.Workflow;
 import neota.workflow.elements.nodes.Node;
-import neota.workflow.elements.nodes.NodeType;
 
 
 public class SessionExecutor
 {
-	@Data
-	@AllArgsConstructor
-	private static class NodeTask
-	{
-		Session session;
-		Node node;
-	}
-
-	
-	@Data
-	@AllArgsConstructor
-	private static class FutureInfo
-	{
-		Session session;
-		Node node;
-		Future<?> future;
-	}
-	
-	
 	private ExecutorService executor = Executors.newFixedThreadPool(20);
-	private Map<String, Session> sessions = new HashMap<>();
+	private ExecutorService taskExecutor = Executors.newSingleThreadExecutor();
 	
-	BlockingQueue<NodeTask> queue = new LinkedBlockingQueue<NodeTask>();
-	List<FutureInfo> futures = Collections.synchronizedList(new LinkedList<>());
+	private Map<String, Session> sessions = new ConcurrentHashMap<>();
+	private Map<String, Session> waitingSessions = new ConcurrentHashMap<>();
+	
+	private BlockingQueue<Session> tasks = new ArrayBlockingQueue<>(1000);
+
+	private List<TaskObserver> taskObservers = new ArrayList<>();
+	private List<SessionObserver> sessionObservers = new ArrayList<>();
+	
 	
 	public SessionExecutor()
 	{
-		Thread tasker = new Thread(new Runnable()
+		runTaskThread();
+	}
+	
+	
+	public void shutdown()
+	{
+		executor.shutdown();
+		taskExecutor.shutdown();
+	}
+
+
+	public Session getSession(String sessionId)
+	{
+		return sessions.get(sessionId);
+	}
+	
+	
+	public void submit(Session session)
+	{
+		sessions.put(session.getId(), session);
+		continueSession(session.getId());
+	}
+	
+	
+	public void resumeSession(String sessionId)
+	{
+		if (!waitingSessions.containsKey(sessionId))
+		{
+			throw new RuntimeException(MessageFormat.format("The session with ID {0} is not among the waiting sessions",
+					sessionId));
+		}
+		else
+		{
+			waitingSessions.remove(sessionId);
+			continueSession(sessionId);
+		}
+	}
+	
+	
+	public void registerTaskObserver(TaskObserver observer)
+	{
+		taskObservers.add(observer);
+	}
+	
+	
+	public void registerSessionObserver(SessionObserver observer)
+	{
+		sessionObservers.add(observer);
+	}
+	
+	
+	private void onSessionTaskComplete(Session session)
+	{
+		System.out.println("onSessionTaskComplete, state = " + session.getState().name());
+		
+		if (session.getState() == Session.State.EXECUTING)
+		{
+			onTaskComplete(session);
+			continueSession(session.getId());
+		}
+	}
+
+
+	private void runTaskThread()
+	{
+		taskExecutor.submit(new Runnable()
 		{
 			@Override
 			public void run()
 			{
 				while (true)
 				{
-					NodeTask task = queue.poll();
-					Node node = task.getNode();
-					Session session = task.getSession();
-					
-					if (node != null)
+					Session session = tasks.poll();
+					if (session != null)
 					{
-						Future<?> future = executor.submit(() -> node.execute());
-						futures.add(new FutureInfo(session, node, future));
+						advanceSession(session);
 					}
 				}
 			}
 		});
-		
-		Thread checker = new Thread(new Runnable()
-		{			
-			@Override
-			public void run()
-			{
-				while (true)
-				{
-					List<FutureInfo> completed = new ArrayList<>();
-
-					// go over all the futures and check them
-					for (FutureInfo f : futures)
-					{
-						// if the task is done move on to the next one
-						Future<?> future = f.getFuture();
-						if (future.isDone())
-						{
-							completed.add(f);
-							
-							Node node = f.getNode();
-							
-							String output = "";
-							if (node.getType() == NodeType.TASK)
-							{
-								output = node.getName();
-							}
-							else if (node.getType() == NodeType.NOP)
-							{
-								output = "NOP";
-							}
-							
-							output += " completed";
-							System.out.println(output);
-							
-							if (node.getType() == NodeType.END)
-							{
-								// this is the last node
-								System.out.println("Session completed");
-							}
-							else
-							{
-								Session session = f.getSession();
-								Workflow workflow = session.getWorkflow();
-								
-								final Lane currentLane = workflow.getNodesLane(node.getId());
-								final String nextNodeId = node.getOutgoing();
-								final Lane nextNodesLane = workflow.getNodesLane(nextNodeId);
-								
-								if (nextNodesLane.getId().equals(currentLane.getId()))
-								{
-									// continue as normal
-									queue.add(new NodeTask(session, workflow.getNode(nextNodeId)));
-								}
-								else
-								{
-									// need to wait for the signal from outside
-								}
-							}
-						}
-					}
-					
-					futures.removeAll(completed);
-				}
-			}
-		});
-		
-		tasker.start();
-		checker.start();
 	}
 	
 	
-	public void submit(Session session)
+	private void advanceSession(Session session)
 	{
-		Workflow workflow = session.getWorkflow();
-		
-		final String startLaneId = workflow.getStartLane();
-		final Lane startLane = workflow.getLane(startLaneId);
-		
-		final String startNodeId = startLane.getStartNode();
-		final Node startNode = workflow.getNode(startNodeId);
-		
-		sessions.put(session.getId(), session);
-		
-		// add the first task to the execution queue
-		Node currentNode = workflow.getNode(startNode.getOutgoing());
-		queue.add(new NodeTask(session, currentNode));
+		if (session.getState() == Session.State.EXECUTING)
+		{
+			executeSession(session);
+		}
+		else if (session.getState() == Session.State.WAITING)
+		{
+			waitSession(session);
+		}
+	}
+	
+	
+	private void executeSession(Session session)
+	{
+		Node node = session.getCurrentNode();
+		executor.submit(() -> node.execute(new NodeCallback()
+		{
+			@Override
+			public void onTaskComplete()
+			{
+				onSessionTaskComplete(session);
+			}
+		}));
+	}
+	
+	
+	private void waitSession(Session session)
+	{
+		waitingSessions.put(session.getId(), session);
+	}
+	
+	
+	private void continueSession(String sessionId)
+	{
+		Session session = sessions.get(sessionId);
+		System.out.println("continueSession, current state before = " + session.getState().name());
+		session.advance();
+		System.out.println("continueSession, current state after = " + session.getState().name());
+
+		if (session.getState() == Session.State.COMPLETED)
+		{
+			onSessionComplete(session);
+		}
+		else
+		{
+			// put this session up for execution :)
+			tasks.add(session);
+		}
+	}
+	
+	
+	private void onTaskComplete(Session session)
+	{
+		Node node = session.getCurrentNode();
+		taskObservers.forEach(observer -> observer.onTaskComplete(node));
+	}
+	
+	
+	private void onSessionComplete(Session session)
+	{
+		// this is the last node
+		sessionObservers.forEach(observer -> observer.onSessionComplete(session));
 	}
 }

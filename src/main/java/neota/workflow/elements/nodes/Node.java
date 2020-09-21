@@ -3,23 +3,31 @@ package neota.workflow.elements.nodes;
 import java.text.MessageFormat;
 import java.util.Map;
 
-import lombok.AllArgsConstructor;
 import lombok.Data;
 import neota.workflow.data.NodeData;
+import neota.workflow.elements.NodeCallback;
 
 
 @Data
 public abstract class Node
 {
+	public static enum Type
+	{
+		START,
+		END,
+		TASK,
+		NOP
+	}
+	
 	private String id;
-	private NodeType type;
+	private Node.Type type;
 	private String name;
 	
 	private String incoming;
 	private String outgoing;
 	
 	
-	public Node(String id, NodeType type, String name)
+	public Node(String id, Node.Type type, String name)
 	{
 		this.id = id;
 		this.type = type;
@@ -74,5 +82,12 @@ public abstract class Node
 	}
 	
 	
-	public abstract void execute();
+	public void execute(NodeCallback callback)
+	{
+		runNodeTask();
+		callback.onTaskComplete();
+	}
+	
+	
+	public abstract void runNodeTask();
 }

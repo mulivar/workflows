@@ -7,7 +7,6 @@ import java.util.Map;
 import lombok.Data;
 import neota.workflow.data.LaneData;
 import neota.workflow.elements.nodes.Node;
-import neota.workflow.elements.nodes.NodeType;
 
 
 /**
@@ -36,11 +35,11 @@ public class Lane
 	{
 		nodes.put(node.getId(), node);
 		
-		if (node.getType() == NodeType.START)
+		if (node.getType() == Node.Type.START)
 		{
 			startNode = node.getId();
 		}
-		else if (node.getType() == NodeType.END)
+		else if (node.getType() == Node.Type.END)
 		{
 			endNode = node.getId();
 		}

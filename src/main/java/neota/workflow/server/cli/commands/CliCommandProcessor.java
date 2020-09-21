@@ -1,9 +1,11 @@
 package neota.workflow.server.cli.commands;
 
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.StringJoiner;
 
 import neota.workflow.commands.CliCommand;
 import neota.workflow.commands.CommandProcessor;
@@ -11,25 +13,44 @@ import neota.workflow.server.WorkflowHandler;
 
 
 /**
- * @author leto
+ * @author iackar
  */
 public class CliCommandProcessor implements CommandProcessor
 {
-	Map<CommandType, AvailableCommand> commands = new HashMap<>();
+	private Map<CommandType, AvailableCommand> commands = new HashMap<>();
 	
-	WorkflowHandler workflows;
+	private WorkflowHandler workflows;
 	
 	
 	public CliCommandProcessor(WorkflowHandler handler)
 	{
 		// add all the commands
-		commands.put(CommandType.CREATE_WORKFLOW, new AvailableCommand(1, "create", "workflow"));
-		commands.put(CommandType.CREATE_SESSION, new AvailableCommand(1, "create", "session"));
-		commands.put(CommandType.RESUME_SESSION, new AvailableCommand(1, "resume", "session"));
-		commands.put(CommandType.GET_SESSION, new AvailableCommand(1, "get", "session"));
-		commands.put(CommandType.SET_TIMEOUT, new AvailableCommand(1, "set", "timeout"));
+		commands.put(CommandType.CREATE_WORKFLOW,
+				new AvailableCommand(Arrays.asList("create", "workflow"), Arrays.asList("path/to/workflow.json")));
+		commands.put(CommandType.CREATE_SESSION,
+				new AvailableCommand(Arrays.asList("create", "session"), Arrays.asList("sessionId")));
+		commands.put(CommandType.RESUME_SESSION,
+				new AvailableCommand(Arrays.asList("resume", "session"), Arrays.asList("sessionId")));
+		commands.put(CommandType.GET_SESSION,
+				new AvailableCommand(Arrays.asList("get", "session"), Arrays.asList("sessionId")));
+		commands.put(CommandType.SET_TIMEOUT,
+				new AvailableCommand(Arrays.asList("set", "timeout"), Arrays.asList("timeout_in_seconds")));
 		
 		workflows = handler;
+	}
+	
+	
+	public Collection<AvailableCommand> getAvailableCommands()
+	{
+		return commands.values();
+	}
+	
+	
+	public String getAvailableCommandsAsString()
+	{
+		StringJoiner joiner = new StringJoiner("\n");
+		getAvailableCommands().forEach(command -> joiner.add(command.getDescription()));
+		return joiner.toString();
 	}
 	
 	
@@ -37,19 +58,12 @@ public class CliCommandProcessor implements CommandProcessor
 	public CliCommand makeCommand(String data)
 	{
 		data = data.toLowerCase();
-		String[] tokens = data.split("\\s");
-		if (tokens.length != 3)
-		{
-			throw new RuntimeException("Invalid command supplied");
-		}
-		
-		List<String> actualTokens = Arrays.asList(tokens[0], tokens[1]);
-		String parameter = tokens[2];
+		List<String> tokens = Arrays.asList(data.split("\\s"));
 		
 		CommandType type = null;
 		for (Map.Entry<CommandType, AvailableCommand> entry : commands.entrySet())
 		{
-			if (entry.getValue().isMatch(1, actualTokens))
+			if (entry.getValue().isMatch(tokens))
 			{
 				type = entry.getKey();
 				break;
@@ -61,19 +75,19 @@ public class CliCommandProcessor implements CommandProcessor
 		switch(type)
 		{
 		case CREATE_SESSION:
-			command = new CreateSessionCommand(workflows, parameter);
+			command = new CreateSessionCommand(workflows, tokens.get(tokens.size() - 1));
 			break;
 		case CREATE_WORKFLOW:
-			command = new CreateWorkflowCommand(workflows, parameter);
+			command = new CreateWorkflowCommand(workflows, tokens.get(tokens.size() - 1));
 			break;
 		case GET_SESSION:
-			command = new GetSessionCommand(workflows, parameter);
+			command = new GetSessionCommand(workflows, tokens.get(tokens.size() - 1));
 			break;
 		case RESUME_SESSION:
-			command = new ResumeSessionCommand(workflows, parameter);
+			command = new ResumeSessionCommand(workflows, tokens.get(tokens.size() - 1));
 			break;
 		case SET_TIMEOUT:
-			command = new SetTimeoutCommand(workflows, parameter);
+			command = new SetTimeoutCommand(workflows, tokens.get(tokens.size() - 1));
 			break;
 		default:
 			throw new RuntimeException("Invalid command supplied");
