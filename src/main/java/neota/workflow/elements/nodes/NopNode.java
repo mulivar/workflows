@@ -14,12 +14,11 @@ public class NopNode extends Node
 	{
 		try
 		{
-			Thread.sleep(10000);
+			Thread.sleep(getTimeout() * 1000);
 		}
 		catch (InterruptedException e)
 		{
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			// TODO
 		}
 	}
 }

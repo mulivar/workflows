@@ -86,10 +86,11 @@ public class WorkflowHandler
 
 	public synchronized void setTimeout(int timeout)
 	{
+		executor.setTimeout(timeout);
 	}
 	
 	
-	public void registerTaskObserver(TaskObserver observer)
+	public void registerTaskObserver(SessionObserver observer)
 	{
 		executor.registerTaskObserver(observer);
 	}

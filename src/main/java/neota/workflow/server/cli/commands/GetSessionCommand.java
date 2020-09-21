@@ -25,10 +25,21 @@ public class GetSessionCommand extends CliCommand
 	public CommandStatus execute()
 	{
 		Session session = workflows.getSession(argument);
-		String output = session.getCurrentLane().getName();
-		if (session.getState() == Session.State.COMPLETED)
+		
+		String output = "";
+		switch (session.getState())
 		{
+		case COMPLETED:
 			output = "Ended";
+			break;
+		case EXECUTING:
+			output = session.getCurrentNode().getName() + " in progress";
+			break;
+		case WAITING:
+			output = session.getCurrentLane().getName();
+			break;
+		case NOT_STARTED:
+			throw new IllegalStateException("The session hasn't been started yet");
 		}
 		
 		return new CommandStatus(output, Status.SUCCESS);

@@ -17,16 +17,21 @@ import neota.workflow.elements.nodes.Node;
 
 public class SessionExecutor
 {
-	private ExecutorService executor = Executors.newFixedThreadPool(20);
+	public static final int THREAD_COUNT	= 20;
+	public static final int QUEUE_LENGTH	= 1000;
+	
+	private ExecutorService executor = Executors.newFixedThreadPool(THREAD_COUNT);
 	private ExecutorService taskExecutor = Executors.newSingleThreadExecutor();
 	
 	private Map<String, Session> sessions = new ConcurrentHashMap<>();
 	private Map<String, Session> waitingSessions = new ConcurrentHashMap<>();
 	
-	private BlockingQueue<Session> tasks = new ArrayBlockingQueue<>(1000);
+	private BlockingQueue<Session> tasks = new ArrayBlockingQueue<>(QUEUE_LENGTH);
 
-	private List<TaskObserver> taskObservers = new ArrayList<>();
+	private List<SessionObserver> taskObservers = new ArrayList<>();
 	private List<SessionObserver> sessionObservers = new ArrayList<>();
+	
+	private int timeout = Node.DEFAULT_TIMEOUT;
 	
 	
 	public SessionExecutor()
@@ -45,6 +50,24 @@ public class SessionExecutor
 	public Session getSession(String sessionId)
 	{
 		return sessions.get(sessionId);
+	}
+	
+	
+	public void registerTaskObserver(SessionObserver observer)
+	{
+		taskObservers.add(observer);
+	}
+	
+	
+	public void registerSessionObserver(SessionObserver observer)
+	{
+		sessionObservers.add(observer);
+	}
+
+
+	public void setTimeout(int timeout)
+	{
+		this.timeout = timeout;
 	}
 	
 	
@@ -70,23 +93,11 @@ public class SessionExecutor
 	}
 	
 	
-	public void registerTaskObserver(TaskObserver observer)
-	{
-		taskObservers.add(observer);
-	}
-	
-	
-	public void registerSessionObserver(SessionObserver observer)
-	{
-		sessionObservers.add(observer);
-	}
-	
-	
 	private void onSessionTaskComplete(Session session)
 	{
 		System.out.println("onSessionTaskComplete, state = " + session.getState().name());
 		
-		if (session.getState() == Session.State.EXECUTING)
+		if (session.isRunning())
 		{
 			onTaskComplete(session);
 			continueSession(session.getId());
@@ -116,11 +127,11 @@ public class SessionExecutor
 	
 	private void advanceSession(Session session)
 	{
-		if (session.getState() == Session.State.EXECUTING)
+		if (session.isRunning())
 		{
 			executeSession(session);
 		}
-		else if (session.getState() == Session.State.WAITING)
+		else if (session.isWaiting())
 		{
 			waitSession(session);
 		}
@@ -130,6 +141,8 @@ public class SessionExecutor
 	private void executeSession(Session session)
 	{
 		Node node = session.getCurrentNode();
+		node.setTimeout(timeout);
+		
 		executor.submit(() -> node.execute(new NodeCallback()
 		{
 			@Override
@@ -154,7 +167,7 @@ public class SessionExecutor
 		session.advance();
 		System.out.println("continueSession, current state after = " + session.getState().name());
 
-		if (session.getState() == Session.State.COMPLETED)
+		if (session.isDone())
 		{
 			onSessionComplete(session);
 		}

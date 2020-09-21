@@ -11,6 +11,9 @@ import neota.workflow.elements.NodeCallback;
 @Data
 public abstract class Node
 {
+	/** The default timeout in seconds */
+	public static int DEFAULT_TIMEOUT	= 60;
+	
 	public static enum Type
 	{
 		START,
@@ -19,12 +22,13 @@ public abstract class Node
 		NOP
 	}
 	
-	private String id;
-	private Node.Type type;
-	private String name;
+	protected String id;
+	protected Node.Type type;
+	protected String name;
 	
-	private String incoming;
-	private String outgoing;
+	protected int timeout = DEFAULT_TIMEOUT;
+	protected String incomingNodeId;
+	protected String outgoingNodeId;
 	
 	
 	public Node(String id, Node.Type type, String name)
@@ -77,8 +81,8 @@ public abstract class Node
 					to));
 		}
 		
-		nodes.get(from).setOutgoing(to);
-		nodes.get(to).setIncoming(from);
+		nodes.get(from).setOutgoingNodeId(to);
+		nodes.get(to).setIncomingNodeId(from);
 	}
 	
 	

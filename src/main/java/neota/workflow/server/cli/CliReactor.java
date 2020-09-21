@@ -5,10 +5,9 @@ import java.text.MessageFormat;
 import neota.workflow.elements.Session;
 import neota.workflow.elements.nodes.Node;
 import neota.workflow.server.SessionObserver;
-import neota.workflow.server.TaskObserver;
 
 
-public class CliReactor implements TaskObserver, SessionObserver
+public class CliReactor implements SessionObserver
 {
 	@Override
 	public void onTaskComplete(Node node)

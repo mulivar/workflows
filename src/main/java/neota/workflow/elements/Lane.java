@@ -20,8 +20,8 @@ public class Lane
 	private String name;
 	
 	private Map<String, Node> nodes = new HashMap<>();
-	private String startNode;
-	private String endNode;
+	private String startNodeId;
+	private String endNodeId;
 	
 	
 	public Lane(String id, String name)
@@ -37,24 +37,24 @@ public class Lane
 		
 		if (node.getType() == Node.Type.START)
 		{
-			startNode = node.getId();
+			startNodeId = node.getId();
 		}
 		else if (node.getType() == Node.Type.END)
 		{
-			endNode = node.getId();
+			endNodeId = node.getId();
 		}
 	}
 	
 	
 	public boolean isStartLane()
 	{
-		return startNode != null;
+		return startNodeId != null;
 	}
 	
 	
 	public boolean isEndLane()
 	{
-		return endNode != null;
+		return endNodeId != null;
 	}
 
 	

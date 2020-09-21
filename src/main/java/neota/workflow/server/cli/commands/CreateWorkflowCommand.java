@@ -14,9 +14,7 @@ import neota.workflow.server.WorkflowHandler;
 
 
 /**
- * 
  * @author iackar
- *
  */
 @Getter
 public class CreateWorkflowCommand extends CliCommand

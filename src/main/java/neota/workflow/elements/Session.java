@@ -34,7 +34,7 @@ public class Session
 		
 		// initialise the current node to the starting node
 		final Lane startLane = workflow.getLane(workflow.getStartLane());
-		final Node startNode = workflow.getNode(startLane.getStartNode());
+		final Node startNode = workflow.getNode(startLane.getStartNodeId());
 		
 		this.currentNode = startNode;
 	}
@@ -86,7 +86,7 @@ public class Session
 	private void handleFromNotStarted()
 	{
 		state = State.EXECUTING;
-		currentNode = workflow.getNode(currentNode.getOutgoing());
+		currentNode = workflow.getNode(currentNode.getOutgoingNodeId());
 	}
 	
 	
@@ -94,7 +94,7 @@ public class Session
 	{
 		if (currentNode.getType() != Node.Type.END)
 		{
-			Node nextNode = workflow.getNode(currentNode.getOutgoing());
+			Node nextNode = workflow.getNode(currentNode.getOutgoingNodeId());
 			
 			final Lane currentLane = workflow.getNodeLane(currentNode.getId());
 			final Lane nextNodeLane = workflow.getNodeLane(nextNode.getId());
