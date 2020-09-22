@@ -57,18 +57,8 @@ public class CliCommandProcessor implements CommandProcessor
 	@Override
 	public CliCommand makeCommand(String data)
 	{
-		data = data.toLowerCase();
-		List<String> tokens = Arrays.asList(data.split("\\s"));
-		
-		CommandType type = null;
-		for (Map.Entry<CommandType, AvailableCommand> entry : commands.entrySet())
-		{
-			if (entry.getValue().isMatch(tokens))
-			{
-				type = entry.getKey();
-				break;
-			}
-		}
+		List<String> tokens = extractTokens(data);
+		CommandType type = extractCommandType(tokens);
 		
 		CliCommand command;
 		
@@ -94,5 +84,33 @@ public class CliCommandProcessor implements CommandProcessor
 		}
 		
 		return command;
+	}
+	
+	
+	private List<String> extractTokens(String data)
+	{
+		data = data.toLowerCase();
+		return Arrays.asList(data.split("\\s"));
+	}
+	
+	
+	private CommandType extractCommandType(List<String> tokens)
+	{
+		CommandType type = null;
+		for (Map.Entry<CommandType, AvailableCommand> entry : commands.entrySet())
+		{
+			if (entry.getValue().isMatch(tokens))
+			{
+				type = entry.getKey();
+				break;
+			}
+		}
+		
+		if (type == null)
+		{
+			throw new IllegalArgumentException("Malformed command detected, perhaps command arguments are missing?");
+		}
+		
+		return type;
 	}
 }

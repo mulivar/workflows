@@ -10,8 +10,7 @@ import java.util.concurrent.Executors;
 
 import neota.workflow.commands.Command;
 import neota.workflow.commands.CommandProcessor;
-import neota.workflow.commands.CommandStatus;
-import neota.workflow.commands.Status;
+import neota.workflow.commands.CommandInfo;
 import neota.workflow.server.CommandServer;
 import neota.workflow.server.WorkflowHandler;
 import neota.workflow.server.cli.commands.CliCommandProcessor;
@@ -61,13 +60,13 @@ public class CliCommandServer implements CommandServer
 						try
 						{
 							Command command = commander.makeCommand(line);
-							CommandStatus status = command.execute();
+							CommandInfo info = command.execute();
 							
-							PrintStream output = status.getStatus() == Status.ERROR ? System.err : System.out;
+							PrintStream output = info.getStatus() == CommandInfo.Status.ERROR ? System.err : System.out;
 							
-							if (!status.getMessage().isEmpty()) 
+							if (!info.getMessage().isEmpty()) 
 							{
-								output.println(status.getMessage());
+								output.println(info.getMessage());
 							}
 						}
 						catch (Exception e)

@@ -1,9 +1,11 @@
 package neota.workflow.server.cli.commands;
 
+import java.text.MessageFormat;
+
 import lombok.Getter;
 import neota.workflow.commands.CliCommand;
-import neota.workflow.commands.CommandStatus;
-import neota.workflow.commands.Status;
+import neota.workflow.commands.CommandInfo;
+import neota.workflow.exceptions.ValidationException;
 import neota.workflow.server.WorkflowHandler;
 
 
@@ -22,9 +24,17 @@ public class ResumeSessionCommand extends CliCommand
 	
 
 	@Override
-	public CommandStatus execute()
+	public CommandInfo execute()
 	{
-		workflows.resumeSession(argument);
-		return new CommandStatus("", Status.SUCCESS);
+		try
+		{
+			workflows.resumeSession(argument);
+			return new CommandInfo("", CommandInfo.Status.SUCCESS);
+		}
+		catch (ValidationException e)
+		{
+			return new CommandInfo(MessageFormat.format("Unable to resume the session, reason = {0}",
+					e.getMessage()), CommandInfo.Status.WARNING);
+		}
 	}
 }

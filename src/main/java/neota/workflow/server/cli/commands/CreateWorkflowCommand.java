@@ -8,8 +8,8 @@ import com.fasterxml.jackson.databind.JsonMappingException;
 
 import lombok.Getter;
 import neota.workflow.commands.CliCommand;
-import neota.workflow.commands.CommandStatus;
-import neota.workflow.commands.Status;
+import neota.workflow.commands.CommandInfo;
+import neota.workflow.exceptions.ValidationException;
 import neota.workflow.server.WorkflowHandler;
 
 
@@ -26,27 +26,32 @@ public class CreateWorkflowCommand extends CliCommand
 
 	
 	@Override
-	public CommandStatus execute()
+	public CommandInfo execute()
 	{
 		try
 		{
 			final String workflowId = workflows.loadFromJson(argument);
-			return new CommandStatus("Created workflow, ID = " + workflowId, Status.SUCCESS);
+			return new CommandInfo("Created workflow, ID = " + workflowId, CommandInfo.Status.SUCCESS);
 		}
 		catch (JsonParseException e)
 		{
-			return new CommandStatus(MessageFormat.format("Unable to parse the input JSON, reason = {0}",
-					e.getMessage()), Status.ERROR);
+			return new CommandInfo(MessageFormat.format("Unable to parse the input JSON, reason = {0}",
+					e.getMessage()), CommandInfo.Status.ERROR);
 		}
 		catch (JsonMappingException e)
 		{
-			return new CommandStatus(MessageFormat.format("Unable to map the input JSON to data structures, reason = {0}",
-					e.getMessage()), Status.ERROR);
+			return new CommandInfo(MessageFormat.format("Unable to map the input JSON to data structures, reason = {0}",
+					e.getMessage()), CommandInfo.Status.ERROR);
 		}
 		catch (IOException e)
 		{
-			return new CommandStatus(MessageFormat.format("Unable to open the file {0} for reading, reason = {1}",
-					argument, e.getMessage()), Status.ERROR);
+			return new CommandInfo(MessageFormat.format("Unable to open the file {0} for reading, reason = {1}",
+					argument, e.getMessage()), CommandInfo.Status.ERROR);
+		}
+		catch (ValidationException e)
+		{
+			return new CommandInfo(MessageFormat.format("Unable to validate the loaded workflow, reason = {0}",
+					e.getMessage()), CommandInfo.Status.WARNING);
 		}
 	}
 }

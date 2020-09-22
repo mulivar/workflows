@@ -12,6 +12,7 @@ import neota.workflow.elements.NodeCallback;
 public abstract class Node
 {
 	/** The default timeout in seconds */
+	// TODO change this to 60
 	public static int DEFAULT_TIMEOUT	= 10;
 	
 	public static enum Type
@@ -27,9 +28,12 @@ public abstract class Node
 	protected String name;
 	
 	protected int timeout = DEFAULT_TIMEOUT;
-	
-	protected String incomingNodeId;
+
+	// for branching this would have to be a list in order to support a complex graph
 	protected String outgoingNodeId;
+	
+	protected boolean visited = false;
+	protected boolean beingVisited = false;
 	
 	
 	public Node(String id, Node.Type type, String name)
@@ -83,7 +87,6 @@ public abstract class Node
 		}
 		
 		nodes.get(from).setOutgoingNodeId(to);
-		nodes.get(to).setIncomingNodeId(from);
 	}
 	
 	

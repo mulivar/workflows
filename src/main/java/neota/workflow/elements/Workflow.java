@@ -1,8 +1,10 @@
 package neota.workflow.elements;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -49,8 +51,18 @@ public class Workflow
 	
 	public String getId()
 	{
-		// TODO
+		// trivial handling of the UUID calculation
 		return UUID.fromString(lanes.get(getStartLaneId()).getId()).toString();
+	}
+	
+	
+	public Node getStartNode()
+	{
+		List<Node> startNode = nodes.values().stream()
+				.filter(node -> node.getType() == Node.Type.START)
+				.collect(Collectors.toList());
+		
+		return startNode.get(0);
 	}
 	
 	

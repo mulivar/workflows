@@ -2,8 +2,8 @@ package neota.workflow.server.cli.commands;
 
 import lombok.Getter;
 import neota.workflow.commands.CliCommand;
-import neota.workflow.commands.CommandStatus;
-import neota.workflow.commands.Status;
+import neota.workflow.commands.CommandInfo;
+import neota.workflow.exceptions.ValidationException;
 import neota.workflow.server.WorkflowHandler;
 
 
@@ -22,9 +22,9 @@ public class CreateSessionCommand extends CliCommand
 
 	
 	@Override
-	public CommandStatus execute()
+	public CommandInfo execute()
 	{
 		final String sessionId = workflows.createSession(argument);
-		return new CommandStatus("Created session, ID = " + sessionId, Status.SUCCESS);
+		return new CommandInfo("Created session, ID = " + sessionId, CommandInfo.Status.SUCCESS);
 	}
 }

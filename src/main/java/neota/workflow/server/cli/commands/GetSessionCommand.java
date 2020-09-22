@@ -2,8 +2,7 @@ package neota.workflow.server.cli.commands;
 
 import lombok.Getter;
 import neota.workflow.commands.CliCommand;
-import neota.workflow.commands.CommandStatus;
-import neota.workflow.commands.Status;
+import neota.workflow.commands.CommandInfo;
 import neota.workflow.elements.Session;
 import neota.workflow.elements.nodes.Node;
 import neota.workflow.server.WorkflowHandler;
@@ -23,7 +22,7 @@ public class GetSessionCommand extends CliCommand
 	
 
 	@Override
-	public CommandStatus execute()
+	public CommandInfo execute()
 	{
 		Session session = workflows.getSession(argument);
 		
@@ -50,6 +49,6 @@ public class GetSessionCommand extends CliCommand
 			throw new IllegalStateException("The session hasn't been started yet");
 		}
 		
-		return new CommandStatus(output, Status.SUCCESS);
+		return new CommandInfo(output, CommandInfo.Status.SUCCESS);
 	}
 }

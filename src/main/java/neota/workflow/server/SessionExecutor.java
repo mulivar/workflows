@@ -1,6 +1,5 @@
 package neota.workflow.server;
 
-import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -16,6 +15,10 @@ import neota.workflow.elements.Session;
 import neota.workflow.elements.SessionCallback;
 import neota.workflow.elements.Workflow;
 import neota.workflow.elements.nodes.Node;
+import neota.workflow.exceptions.ValidationException;
+import neota.workflow.validation.SessionResumeRule;
+import neota.workflow.validation.ValidationRule;
+import neota.workflow.validation.Validator;
 
 
 public class SessionExecutor implements SessionCallback
@@ -33,6 +36,8 @@ public class SessionExecutor implements SessionCallback
 
 	private List<SessionObserver> taskObservers = new ArrayList<>();
 	private List<SessionObserver> sessionObservers = new ArrayList<>();
+	
+	private Validator validator = new Validator();
 	
 	private int timeout = Node.DEFAULT_TIMEOUT;
 	
@@ -86,18 +91,15 @@ public class SessionExecutor implements SessionCallback
 	}
 	
 	
-	public void resumeSession(String sessionId)
+	public void resumeSession(String sessionId) throws ValidationException
 	{
-		if (!waitingSessions.containsKey(sessionId))
-		{
-			throw new RuntimeException(MessageFormat.format("The session with ID {0} is not among the waiting sessions",
-					sessionId));
-		}
-		else
-		{
-			waitingSessions.remove(sessionId);
-			continueSession(sessionId);
-		}
+		List<ValidationRule> rules = new ArrayList<>();
+		rules.add(new SessionResumeRule(sessions.get(sessionId), waitingSessions));
+		
+		validator.validate(rules);
+		
+		waitingSessions.remove(sessionId);
+		continueSession(sessionId);
 	}
 
 
@@ -120,8 +122,7 @@ public class SessionExecutor implements SessionCallback
 					}
 					catch (InterruptedException e)
 					{
-						// TODO Auto-generated catch block
-						e.printStackTrace();
+						System.err.println("An error occurred while polling tasks, message = " + e.getMessage());
 					}
 				}
 			}

@@ -2,8 +2,7 @@ package neota.workflow.server.cli.commands;
 
 import lombok.Getter;
 import neota.workflow.commands.CliCommand;
-import neota.workflow.commands.CommandStatus;
-import neota.workflow.commands.Status;
+import neota.workflow.commands.CommandInfo;
 import neota.workflow.server.WorkflowHandler;
 
 
@@ -22,9 +21,9 @@ public class SetTimeoutCommand extends CliCommand
 
 	
 	@Override
-	public CommandStatus execute()
+	public CommandInfo execute()
 	{
 		workflows.setTimeout(Integer.valueOf(argument));
-		return new CommandStatus("", Status.SUCCESS);
+		return new CommandInfo("", CommandInfo.Status.SUCCESS);
 	}
 }

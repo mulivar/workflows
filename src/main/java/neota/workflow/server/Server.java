@@ -8,13 +8,15 @@ import neota.workflow.server.cli.CliCommandServer;
  */
 public class Server
 {
+	/** The single workflow handler for all interfaces. */
 	WorkflowHandler workflows = new WorkflowHandler();
 	
+	/** The command server that processes CLI commands. */
 	CommandServer cli;
 	
 	
 	/**
-	 * Starts the server until interrupted from outside.
+	 * Starts the CLI command server in the background.
 	 */
 	public void startCliInterface()
 	{

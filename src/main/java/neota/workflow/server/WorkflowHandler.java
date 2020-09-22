@@ -3,7 +3,9 @@ package neota.workflow.server;
 import java.io.IOException;
 import java.nio.file.Paths;
 import java.text.MessageFormat;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import com.fasterxml.jackson.core.JsonParseException;
@@ -14,6 +16,12 @@ import lombok.Getter;
 import neota.workflow.data.WorkflowData;
 import neota.workflow.elements.Session;
 import neota.workflow.elements.Workflow;
+import neota.workflow.exceptions.ValidationException;
+import neota.workflow.validation.CycleRule;
+import neota.workflow.validation.SingleLinkRule;
+import neota.workflow.validation.StartEndNodesRule;
+import neota.workflow.validation.ValidationRule;
+import neota.workflow.validation.Validator;
 
 
 /**
@@ -24,7 +32,7 @@ public class WorkflowHandler
 	@Getter
 	private Map<String, Workflow> workflows = new HashMap<>();
 	
-	private WorkflowChecker checker = new WorkflowChecker();
+	private Validator validator = new Validator();
 	
 	@Getter
 	private SessionExecutor executor = new SessionExecutor();
@@ -36,7 +44,8 @@ public class WorkflowHandler
 	}
 	
 	
-	public synchronized String loadFromJson(String path) throws JsonParseException, JsonMappingException, IOException
+	public synchronized String loadFromJson(String path)
+			throws JsonParseException, JsonMappingException, IOException, ValidationException
 	{
 		// load the entire file, and only then process it
 	    ObjectMapper mapper = new ObjectMapper();
@@ -46,8 +55,11 @@ public class WorkflowHandler
 	    Workflow workflow = Workflow.from(workflowData);
 	    
 	    // validate the workflow
-	    // TODO
-	    checker.validate(workflow);
+	    List<ValidationRule> rules = new ArrayList<>();
+	    rules.add(new StartEndNodesRule(workflow));
+	    rules.add(new SingleLinkRule(workflow));
+	    rules.add(new CycleRule(workflow));
+	    validator.validate(rules);
 	    
 	    String workflowId = workflow.getId();
 	    if (workflows.containsKey(workflowId))
@@ -68,9 +80,7 @@ public class WorkflowHandler
 
 	public synchronized String createSession(String workflowId)
 	{
-		final String sessionId = executor.submit(workflows.get(workflowId));
-		
-		return sessionId;
+		return executor.submit(workflows.get(workflowId));
 	}
 	
 	
@@ -80,7 +90,7 @@ public class WorkflowHandler
 	}
 
 
-	public synchronized void resumeSession(String sessionId)
+	public synchronized void resumeSession(String sessionId) throws ValidationException
 	{
 		executor.resumeSession(sessionId);
 	}
@@ -92,13 +102,13 @@ public class WorkflowHandler
 	}
 	
 	
-	public void registerTaskObserver(SessionObserver observer)
+	public synchronized void registerTaskObserver(SessionObserver observer)
 	{
 		executor.registerTaskObserver(observer);
 	}
 	
 	
-	public void registerSessionObserver(SessionObserver observer)
+	public synchronized void registerSessionObserver(SessionObserver observer)
 	{
 		executor.registerSessionObserver(observer);
 	}
