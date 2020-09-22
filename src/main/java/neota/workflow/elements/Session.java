@@ -1,19 +1,12 @@
 package neota.workflow.elements;
 
 import lombok.Getter;
+import lombok.Setter;
 import neota.workflow.elements.nodes.Node;
 
 
 public class Session
 {
-	public static enum State
-	{
-		NOT_STARTED,
-		EXECUTING,
-		TASK_COMPLETE,
-		WAITING,
-		COMPLETED
-	}
 	
 	@Getter
 	private String id;
@@ -21,8 +14,9 @@ public class Session
 	@Getter
 	private Workflow workflow;
 	
-	@Getter
-	private State state = State.NOT_STARTED;
+	@Getter @Setter
+	//private State state = State.NOT_STARTED;
+	private State state;
 	
 	@Getter
 	private Node currentNode;
@@ -41,30 +35,32 @@ public class Session
 		final Node startNode = workflow.getNode(startLane.getStartNodeId());
 		
 		this.currentNode = startNode;
+		
+		state = new NotStartedState(startNode, callback);
 	}
 	
 	
 	public boolean isWaiting()
 	{
-		return state == State.WAITING;
+		return state.getState() == State.StateEnum.WAITING;
 	}
 	
 	
 	public boolean isRunning()
 	{
-		return state == State.EXECUTING;
+		return state.getState() == State.StateEnum.EXECUTING;
 	}
 	
 	
 	public boolean isDone()
 	{
-		return state == State.COMPLETED;
+		return state.getState() == State.StateEnum.COMPLETED;
 	}
 
 
 	public boolean isTaskComplete()
 	{
-		return state == State.TASK_COMPLETE;
+		return state.getState() == State.StateEnum.TASK_COMPLETE;
 	}
 	
 	
@@ -76,75 +72,6 @@ public class Session
 	
 	public void advance()
 	{
-		switch (state)
-		{
-		case NOT_STARTED:
-			handleFromNotStarted();
-			break;
-		case EXECUTING:
-			handleFromExecuting();
-			break;
-		case TASK_COMPLETE:
-			handleFromTaskComplete();
-			break;
-		case WAITING:
-			handleFromWaiting();
-			break;
-		case COMPLETED:
-			throw new RuntimeException("Unable to progress this session, the session's execution has completed");
-		}
-	}
-	
-	
-	private void handleFromNotStarted()
-	{
-		state = State.EXECUTING;
-		currentNode = workflow.getNode(currentNode.getOutgoingNodeId());
-		callback.onTaskRunning(this);
-	}
-	
-	
-	private void handleFromExecuting()
-	{
-		state = State.TASK_COMPLETE;
-		callback.onTaskComplete(this);
-	}
-	
-	
-	private void handleFromTaskComplete()
-	{
-		if (currentNode.getType() == Node.Type.END)
-		{
-			state = State.COMPLETED;
-			callback.onSessionComplete(this);
-		}
-		else
-		{
-			Node nextNode = workflow.getNode(currentNode.getOutgoingNodeId());
-			
-			final Lane currentLane = workflow.getNodeLane(currentNode.getId());
-			final Lane nextNodeLane = workflow.getNodeLane(nextNode.getId());
-			
-			currentNode = nextNode;
-			
-			// if the lanes differ enter the WAITING state
-			if (!nextNodeLane.getId().equals(currentLane.getId()))
-			{
-				state = State.WAITING;
-				callback.onSessionWaiting(this);
-			}
-			else
-			{
-				state = State.EXECUTING;
-				callback.onTaskRunning(this);
-			}
-		}
-	}
-	
-	
-	private void handleFromWaiting()
-	{
-		state = State.EXECUTING;
-		callback.onTaskRunning(this);
+		state.advance(this);
 	}
 }
