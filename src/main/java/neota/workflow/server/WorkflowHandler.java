@@ -5,7 +5,6 @@ import java.nio.file.Paths;
 import java.text.MessageFormat;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.UUID;
 
 import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.databind.JsonMappingException;
@@ -23,7 +22,9 @@ import neota.workflow.elements.Workflow;
 public class WorkflowHandler
 {
 	@Getter
-	private Map<Integer, Workflow> workflows = new HashMap<>();
+	private Map<String, Workflow> workflows = new HashMap<>();
+	
+	private WorkflowChecker checker = new WorkflowChecker();
 	
 	@Getter
 	private SessionExecutor executor = new SessionExecutor();
@@ -35,7 +36,7 @@ public class WorkflowHandler
 	}
 	
 	
-	public synchronized int loadFromJson(String path) throws JsonParseException, JsonMappingException, IOException
+	public synchronized String loadFromJson(String path) throws JsonParseException, JsonMappingException, IOException
 	{
 		// load the entire file, and only then process it
 	    ObjectMapper mapper = new ObjectMapper();
@@ -44,7 +45,11 @@ public class WorkflowHandler
 	    // create a workflow out of the workflow data
 	    Workflow workflow = Workflow.from(workflowData);
 	    
-	    int workflowId = workflow.getId();
+	    // validate the workflow
+	    // TODO
+	    checker.validate(workflow);
+	    
+	    String workflowId = workflow.getId();
 	    if (workflows.containsKey(workflowId))
 	    {
 	    	throw new RuntimeException(MessageFormat.format(
@@ -61,12 +66,9 @@ public class WorkflowHandler
 	}
 	
 
-	public synchronized String createSession(int workflowId)
+	public synchronized String createSession(String workflowId)
 	{
-		final String sessionId = UUID.randomUUID().toString();
-		Session session = new Session(sessionId, workflows.get(workflowId));
-		
-		executor.submit(session);
+		final String sessionId = executor.submit(workflows.get(workflowId));
 		
 		return sessionId;
 	}

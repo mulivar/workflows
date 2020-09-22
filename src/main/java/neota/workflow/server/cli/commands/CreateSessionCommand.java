@@ -24,7 +24,7 @@ public class CreateSessionCommand extends CliCommand
 	@Override
 	public CommandStatus execute()
 	{
-		final String sessionId = workflows.createSession(Integer.valueOf(argument));
+		final String sessionId = workflows.createSession(argument);
 		return new CommandStatus("Created session, ID = " + sessionId, Status.SUCCESS);
 	}
 }

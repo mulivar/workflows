@@ -5,6 +5,7 @@ import neota.workflow.commands.CliCommand;
 import neota.workflow.commands.CommandStatus;
 import neota.workflow.commands.Status;
 import neota.workflow.elements.Session;
+import neota.workflow.elements.nodes.Node;
 import neota.workflow.server.WorkflowHandler;
 
 
@@ -33,7 +34,14 @@ public class GetSessionCommand extends CliCommand
 			output = "Ended";
 			break;
 		case EXECUTING:
-			output = session.getCurrentNode().getName() + " in progress";
+			if (session.getCurrentNode().getType() == Node.Type.NOP)
+			{
+				output = "NOP";
+			}
+			else
+			{
+				output = session.getCurrentNode().getName() + " in progress";
+			}
 			break;
 		case WAITING:
 			output = session.getCurrentLane().getName();

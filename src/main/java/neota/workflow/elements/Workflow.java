@@ -2,6 +2,7 @@ package neota.workflow.elements;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.UUID;
 
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -17,8 +18,8 @@ public class Workflow
 	private Map<String, Lane> lanes = new HashMap<>();
 	private Map<String, Node> nodes = new HashMap<>();
 	
-	private String startLane;
-	private String endLane;
+	private String startLaneId;
+	private String endLaneId;
 	
 	
 	public static Workflow from(WorkflowData data)
@@ -46,9 +47,10 @@ public class Workflow
 	}
 	
 	
-	public int getId()
+	public String getId()
 	{
-		return hashCode();
+		// TODO
+		return UUID.fromString(lanes.get(getStartLaneId()).getId()).toString();
 	}
 	
 	
@@ -87,11 +89,11 @@ public class Workflow
 		
 		if (lane.isStartLane())
 		{
-			startLane = lane.getId();
+			startLaneId = lane.getId();
 		}
 		else if (lane.isEndLane())
 		{
-			endLane = lane.getId();
+			endLaneId = lane.getId();
 		}
 	}
 	

@@ -4,6 +4,7 @@ import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
@@ -12,10 +13,12 @@ import java.util.concurrent.Executors;
 
 import neota.workflow.elements.NodeCallback;
 import neota.workflow.elements.Session;
+import neota.workflow.elements.SessionCallback;
+import neota.workflow.elements.Workflow;
 import neota.workflow.elements.nodes.Node;
 
 
-public class SessionExecutor
+public class SessionExecutor implements SessionCallback
 {
 	public static final int THREAD_COUNT	= 20;
 	public static final int QUEUE_LENGTH	= 1000;
@@ -71,10 +74,15 @@ public class SessionExecutor
 	}
 	
 	
-	public void submit(Session session)
+	public String submit(Workflow workflow)
 	{
-		sessions.put(session.getId(), session);
-		continueSession(session.getId());
+		final String sessionId = UUID.randomUUID().toString();
+		Session session = new Session(sessionId, workflow, this);
+		
+		sessions.put(sessionId, session);
+		continueSession(sessionId);
+		
+		return sessionId;
 	}
 	
 	
@@ -91,18 +99,6 @@ public class SessionExecutor
 			continueSession(sessionId);
 		}
 	}
-	
-	
-	private void onSessionTaskComplete(Session session)
-	{
-		System.out.println("onSessionTaskComplete, state = " + session.getState().name());
-		
-		if (session.isRunning())
-		{
-			onTaskComplete(session);
-			continueSession(session.getId());
-		}
-	}
 
 
 	private void runTaskThread()
@@ -114,10 +110,18 @@ public class SessionExecutor
 			{
 				while (true)
 				{
-					Session session = tasks.poll();
-					if (session != null)
+					try
 					{
-						advanceSession(session);
+						Session session = tasks.take();
+						if (session != null)
+						{
+							executeTask(session);
+						}
+					}
+					catch (InterruptedException e)
+					{
+						// TODO Auto-generated catch block
+						e.printStackTrace();
 					}
 				}
 			}
@@ -125,20 +129,7 @@ public class SessionExecutor
 	}
 	
 	
-	private void advanceSession(Session session)
-	{
-		if (session.isRunning())
-		{
-			executeSession(session);
-		}
-		else if (session.isWaiting())
-		{
-			waitSession(session);
-		}
-	}
-	
-	
-	private void executeSession(Session session)
+	private void executeTask(Session session)
 	{
 		Node node = session.getCurrentNode();
 		node.setTimeout(timeout);
@@ -148,15 +139,10 @@ public class SessionExecutor
 			@Override
 			public void onTaskComplete()
 			{
-				onSessionTaskComplete(session);
+				System.out.println("onSessionTaskComplete, state = " + session.getState().name());
+				continueSession(session.getId());
 			}
 		}));
-	}
-	
-	
-	private void waitSession(Session session)
-	{
-		waitingSessions.put(session.getId(), session);
 	}
 	
 	
@@ -166,29 +152,38 @@ public class SessionExecutor
 		System.out.println("continueSession, current state before = " + session.getState().name());
 		session.advance();
 		System.out.println("continueSession, current state after = " + session.getState().name());
-
-		if (session.isDone())
-		{
-			onSessionComplete(session);
-		}
-		else
-		{
-			// put this session up for execution :)
-			tasks.add(session);
-		}
 	}
 	
+
+	@Override
+	public void onTaskRunning(Session session)
+	{
+		// put this session up for execution :)
+		tasks.add(session);
+	}
 	
-	private void onTaskComplete(Session session)
+
+	@Override
+	public void onTaskComplete(Session session)
 	{
 		Node node = session.getCurrentNode();
 		taskObservers.forEach(observer -> observer.onTaskComplete(node));
+		
+		continueSession(session.getId());
 	}
 	
-	
-	private void onSessionComplete(Session session)
+
+	@Override
+	public void onSessionComplete(Session session)
 	{
 		// this is the last node
 		sessionObservers.forEach(observer -> observer.onSessionComplete(session));
+	}
+
+
+	@Override
+	public void onSessionWaiting(Session session)
+	{
+		waitingSessions.put(session.getId(), session);
 	}
 }

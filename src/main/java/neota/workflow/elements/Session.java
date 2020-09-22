@@ -10,6 +10,7 @@ public class Session
 	{
 		NOT_STARTED,
 		EXECUTING,
+		TASK_COMPLETE,
 		WAITING,
 		COMPLETED
 	}
@@ -26,14 +27,17 @@ public class Session
 	@Getter
 	private Node currentNode;
 	
+	private SessionCallback callback;
 	
-	public Session(String id, Workflow workflow)
+	
+	public Session(String id, Workflow workflow, SessionCallback callback)
 	{
 		this.id = id;
 		this.workflow = workflow;
+		this.callback = callback;
 		
 		// initialise the current node to the starting node
-		final Lane startLane = workflow.getLane(workflow.getStartLane());
+		final Lane startLane = workflow.getLane(workflow.getStartLaneId());
 		final Node startNode = workflow.getNode(startLane.getStartNodeId());
 		
 		this.currentNode = startNode;
@@ -56,6 +60,12 @@ public class Session
 	{
 		return state == State.COMPLETED;
 	}
+
+
+	public boolean isTaskComplete()
+	{
+		return state == State.TASK_COMPLETE;
+	}
 	
 	
 	public Lane getCurrentLane()
@@ -74,6 +84,9 @@ public class Session
 		case EXECUTING:
 			handleFromExecuting();
 			break;
+		case TASK_COMPLETE:
+			handleFromTaskComplete();
+			break;
 		case WAITING:
 			handleFromWaiting();
 			break;
@@ -87,12 +100,25 @@ public class Session
 	{
 		state = State.EXECUTING;
 		currentNode = workflow.getNode(currentNode.getOutgoingNodeId());
+		callback.onTaskRunning(this);
 	}
 	
 	
 	private void handleFromExecuting()
 	{
-		if (currentNode.getType() != Node.Type.END)
+		state = State.TASK_COMPLETE;
+		callback.onTaskComplete(this);
+	}
+	
+	
+	private void handleFromTaskComplete()
+	{
+		if (currentNode.getType() == Node.Type.END)
+		{
+			state = State.COMPLETED;
+			callback.onSessionComplete(this);
+		}
+		else
 		{
 			Node nextNode = workflow.getNode(currentNode.getOutgoingNodeId());
 			
@@ -105,11 +131,13 @@ public class Session
 			if (!nextNodeLane.getId().equals(currentLane.getId()))
 			{
 				state = State.WAITING;
+				callback.onSessionWaiting(this);
 			}
-		}
-		else
-		{
-			state = State.COMPLETED;
+			else
+			{
+				state = State.EXECUTING;
+				callback.onTaskRunning(this);
+			}
 		}
 	}
 	
@@ -117,5 +145,6 @@ public class Session
 	private void handleFromWaiting()
 	{
 		state = State.EXECUTING;
+		callback.onTaskRunning(this);
 	}
 }

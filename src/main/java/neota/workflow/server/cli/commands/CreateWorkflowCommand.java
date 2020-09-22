@@ -30,7 +30,7 @@ public class CreateWorkflowCommand extends CliCommand
 	{
 		try
 		{
-			final int workflowId = workflows.loadFromJson(argument);
+			final String workflowId = workflows.loadFromJson(argument);
 			return new CommandStatus("Created workflow, ID = " + workflowId, Status.SUCCESS);
 		}
 		catch (JsonParseException e)

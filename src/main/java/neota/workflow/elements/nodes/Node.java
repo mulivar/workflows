@@ -12,7 +12,7 @@ import neota.workflow.elements.NodeCallback;
 public abstract class Node
 {
 	/** The default timeout in seconds */
-	public static int DEFAULT_TIMEOUT	= 60;
+	public static int DEFAULT_TIMEOUT	= 10;
 	
 	public static enum Type
 	{
@@ -27,6 +27,7 @@ public abstract class Node
 	protected String name;
 	
 	protected int timeout = DEFAULT_TIMEOUT;
+	
 	protected String incomingNodeId;
 	protected String outgoingNodeId;
 	
