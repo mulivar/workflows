@@ -11,8 +11,7 @@ import neota.workflow.json.NodeData;
 public abstract class Node
 {
 	/** The default timeout in seconds */
-	// TODO change this to 60
-	public static int DEFAULT_TIMEOUT	= 10;
+	public static int DEFAULT_TIMEOUT	= 60;
 	
 	public static enum Type
 	{

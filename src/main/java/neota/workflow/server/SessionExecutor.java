@@ -190,7 +190,6 @@ public class SessionExecutor implements SessionCallback
 			@Override
 			public void onTaskComplete()
 			{
-				log.debug("onSessionTaskComplete, state = " + session.getState().getState().name());
 				session.advance();
 			}
 		}));

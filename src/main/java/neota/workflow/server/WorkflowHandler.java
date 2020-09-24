@@ -99,7 +99,7 @@ public class WorkflowHandler
 	    else
 	    {
 	    	workflows.put(workflowId, workflow);
-	    	log.debug("Successfully stored workflow: " + workflow.toString());
+	    	log.debug("Successfully stored workflow with ID " + workflowId);
 	    }
 		
 		return workflowId;
