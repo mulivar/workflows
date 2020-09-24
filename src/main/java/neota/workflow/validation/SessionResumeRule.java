@@ -6,6 +6,9 @@ import java.util.Map;
 import neota.workflow.elements.Session;
 
 
+/**
+ * Validates that the loaded session is in the waiting state, and still not complete.
+ */
 public class SessionResumeRule extends SessionRule
 {
 	private Map<String, Session> waitingSessions;

@@ -3,40 +3,61 @@ package neota.workflow.elements;
 import lombok.Getter;
 import lombok.Setter;
 import neota.workflow.elements.nodes.Node;
+import neota.workflow.elements.states.NotStartedState;
+import neota.workflow.elements.states.SessionCallback;
+import neota.workflow.elements.states.State;
 
 
+/**
+ * Hosts info about a particular session, i.e. workflow instance, and presents a finite state machine for all
+ * the session states.
+ */
 public class Session
 {
-	
+	/** Session ID. */
 	@Getter
 	private String id;
 	
+	/** The workflow instantiated into this session. */
 	@Getter
 	private Workflow workflow;
 	
+	/** The current state of the session. */
 	@Getter @Setter
-	//private State state = State.NOT_STARTED;
 	private State state;
 	
-	@Getter
+	/** The session's currently executing node, if any. */
+	@Getter @Setter
 	private Node currentNode;
-	
-	private SessionCallback callback;
 	
 	
 	public Session(String id, Workflow workflow, SessionCallback callback)
 	{
 		this.id = id;
 		this.workflow = workflow;
-		this.callback = callback;
 		
 		// initialise the current node to the starting node
-		final Lane startLane = workflow.getLane(workflow.getStartLaneId());
-		final Node startNode = workflow.getNode(startLane.getStartNodeId());
+		final Lane startLane = workflow.getStartLane();
+		final Node startNode = startLane.getStartNode();
 		
 		this.currentNode = startNode;
 		
-		state = new NotStartedState(startNode, callback);
+		state = new NotStartedState(callback);
+	}
+	
+	
+	/**
+	 * Move the session into the next state.
+	 */
+	public void advance()
+	{
+		state.advance(this);
+	}
+	
+	
+	public Lane getCurrentLane()
+	{
+		return workflow.getNodeLane(currentNode.getId());
 	}
 	
 	
@@ -61,17 +82,5 @@ public class Session
 	public boolean isTaskComplete()
 	{
 		return state.getState() == State.StateEnum.TASK_COMPLETE;
-	}
-	
-	
-	public Lane getCurrentLane()
-	{
-		return workflow.getNodeLane(currentNode.getId());
-	}
-	
-	
-	public void advance()
-	{
-		state.advance(this);
 	}
 }

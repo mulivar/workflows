@@ -8,7 +8,6 @@ import lombok.Setter;
 
 /**
  * Workflow validation rule processes workflows.
- * @author leto
  */
 @Getter
 @Setter

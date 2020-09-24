@@ -6,6 +6,9 @@ import neota.workflow.elements.Workflow;
 import neota.workflow.elements.nodes.Node;
 
 
+/**
+ * Validates that the loaded workflow has exactly one start and one end node.
+ */
 public class StartEndNodesRule extends WorkflowRule
 {
 	public StartEndNodesRule(Workflow workflow)

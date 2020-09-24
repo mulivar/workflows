@@ -1,8 +1,13 @@
 package neota.workflow.elements.nodes;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 
 public class TaskNode extends Node
 {
+	private Logger log = LoggerFactory.getLogger(TaskNode.class);
+	
 	public TaskNode(String id, String name)
 	{
 		super(id, Node.Type.TASK, name);
@@ -18,7 +23,7 @@ public class TaskNode extends Node
 		}
 		catch (InterruptedException e)
 		{
-			// TODO
+			log.error("An interupt occurred while executing the task node, message = " + e.getMessage());
 		}
 	}
 }

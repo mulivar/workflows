@@ -4,6 +4,9 @@ import neota.workflow.elements.Workflow;
 import neota.workflow.elements.nodes.Node;
 
 
+/**
+ * Validates that the loaded workflow has no cycles.
+ */
 public class CycleRule extends WorkflowRule
 {
 	public CycleRule(Workflow workflow)
@@ -17,7 +20,7 @@ public class CycleRule extends WorkflowRule
 	{
 		Workflow w = getWorkflow();
 		
-		Node startNode = w.getStartNode();
+		Node startNode = w.getStartLane().getStartNode();
 		return !detectCycle(startNode);
 	}
 
@@ -33,7 +36,7 @@ public class CycleRule extends WorkflowRule
 	{
 	    node.setBeingVisited(true);
 	 
-	    Node neighbour = getWorkflow().getNode(node.getOutgoingNodeId());
+	    Node neighbour = node.getOutgoingNode();
 	    if (neighbour != null)
 	    {
 	        if (neighbour.isBeingVisited())

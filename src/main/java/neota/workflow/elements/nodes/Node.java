@@ -4,8 +4,7 @@ import java.text.MessageFormat;
 import java.util.Map;
 
 import lombok.Data;
-import neota.workflow.data.NodeData;
-import neota.workflow.elements.NodeCallback;
+import neota.workflow.json.NodeData;
 
 
 @Data
@@ -30,7 +29,7 @@ public abstract class Node
 	protected int timeout = DEFAULT_TIMEOUT;
 
 	// for branching this would have to be a list in order to support a complex graph
-	protected String outgoingNodeId;
+	protected Node outgoingNode;
 	
 	protected boolean visited = false;
 	protected boolean beingVisited = false;
@@ -86,7 +85,7 @@ public abstract class Node
 					to));
 		}
 		
-		nodes.get(from).setOutgoingNodeId(to);
+		nodes.get(from).setOutgoingNode(nodes.get(to));
 	}
 	
 	
@@ -97,5 +96,8 @@ public abstract class Node
 	}
 	
 	
+	/**
+	 * The node's actual task to perform.
+	 */
 	public abstract void runNodeTask();
 }

@@ -8,7 +8,6 @@ import neota.workflow.elements.Session;
 
 /**
  * Session validation rule processes sessions.
- * @author leto
  */
 @Getter
 @Setter

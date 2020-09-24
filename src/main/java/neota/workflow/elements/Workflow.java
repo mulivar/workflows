@@ -1,30 +1,32 @@
 package neota.workflow.elements;
 
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.UUID;
-import java.util.stream.Collectors;
+
+import org.apache.commons.codec.digest.DigestUtils;
 
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import neota.workflow.data.SourceData;
-import neota.workflow.data.WorkflowData;
 import neota.workflow.elements.nodes.Node;
+import neota.workflow.json.SourceData;
+import neota.workflow.json.WorkflowData;
 
 
 @Data
 @NoArgsConstructor
 public class Workflow
 {
+	private String id;
+	
 	private Map<String, Lane> lanes = new HashMap<>();
 	private Map<String, Node> nodes = new HashMap<>();
 	
-	private String startLaneId;
-	private String endLaneId;
+	private Lane startLane;
+	private Lane endLane;
 	
 	
-	public static Workflow from(WorkflowData data)
+	public static Workflow from(WorkflowData data, String path)
 	{
 		SourceData source = data.getSource();
 
@@ -45,24 +47,17 @@ public class Workflow
 			workflow.addLane(Lane.from(lane, workflow.getNodes()));
 		});
 		
-		return workflow;
-	}
-	
-	
-	public String getId()
-	{
-		// trivial handling of the UUID calculation
-		return UUID.fromString(lanes.get(getStartLaneId()).getId()).toString();
-	}
-	
-	
-	public Node getStartNode()
-	{
-		List<Node> startNode = nodes.values().stream()
-				.filter(node -> node.getType() == Node.Type.START)
-				.collect(Collectors.toList());
+		// trivial solution, should be better
+		//workflow.id = UUID.fromString(workflow.getStartLane().getId()).toString();
+		String value = "";
+		for (String nodeId : workflow.getNodes().keySet())
+		{
+			value += nodeId;
+		}
 		
-		return startNode.get(0);
+	    workflow.id = DigestUtils.md5Hex(value);
+		
+		return workflow;
 	}
 	
 	
@@ -83,29 +78,17 @@ public class Workflow
 	}
 	
 	
-	public Lane getLane(String id)
-	{
-		return lanes.get(id);
-	}
-
-
-	public Node getNode(String id)
-	{
-		return nodes.get(id);
-	}
-	
-	
 	private void addLane(Lane lane)
 	{
 		lanes.put(lane.getId(), lane);
 		
 		if (lane.isStartLane())
 		{
-			startLaneId = lane.getId();
+			startLane = lane;
 		}
 		else if (lane.isEndLane())
 		{
-			endLaneId = lane.getId();
+			endLane = lane;
 		}
 	}
 	

@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Configuration status="INFO">
+    <Appenders>
+        <Console name="Console" target="SYSTEM_OUT">
+            <PatternLayout pattern="%d{yyyy-MM-dd HH:mm:ss.SSS} %-5level (%t) %c - %m%n"/>
+        </Console>
+
+		<!-- Set to the current working directory in order to avoid any permission related errors. -->
+        <File name="File" fileName="neota_workflows.log">
+            <PatternLayout pattern="%d{yyyy-MM-dd HH:mm:ss.SSS} %-5level (%t) %c - %m%n"/>
+        </File>
+    </Appenders>
+
+    <Loggers>
+        <Root level="DEBUG">
+            <!--<AppenderRef ref="Console"/>-->
+            <AppenderRef ref="File"/>
+        </Root>
+    </Loggers>
+</Configuration>

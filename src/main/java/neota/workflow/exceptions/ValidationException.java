@@ -7,7 +7,6 @@ import lombok.Getter;
 
 /**
  * The exception related to any kind of validation error.
- * @author leto
  */
 @Getter
 public class ValidationException extends Exception

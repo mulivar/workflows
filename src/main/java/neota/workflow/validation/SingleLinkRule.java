@@ -6,6 +6,9 @@ import neota.workflow.elements.Workflow;
 import neota.workflow.elements.nodes.Node;
 
 
+/**
+ * Validates that the loaded workflow nodes have exactly one edge connecting them.
+ */
 public class SingleLinkRule extends WorkflowRule
 {
 	public SingleLinkRule(Workflow workflow)
@@ -29,7 +32,7 @@ public class SingleLinkRule extends WorkflowRule
 		for (Node node : nodes.values())
 		{
 			int count = 0;
-			count += node.getOutgoingNodeId() != null ? 1 : 0;
+			count += node.getOutgoingNode() != null ? 1 : 0;
 			
 			if (count > 1)
 			{
